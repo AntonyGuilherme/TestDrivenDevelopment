@@ -38,7 +38,7 @@ namespace WyCashTests.Domain
                     Name = "IBM",
                     Quantity = 1000,
                     Valuation = 25,
-                    Currency = Currency.Dollar
+                    Money = Money.Dollar
                 }
             };
 
@@ -74,14 +74,14 @@ namespace WyCashTests.Domain
                     Name = "IBM",
                     Quantity = 1000,
                     Valuation = 25,
-                    Currency = Currency.Dollar
+                    Money = Money.Dollar
                 },
                 new FinancialTitle
                 {
                     Name = "Novartis",
                     Quantity = 400,
                     Valuation = 150,
-                    Currency = Currency.SwissFranc
+                    Money = Money.SwissFranc
                 }
             };
 
@@ -108,25 +108,6 @@ namespace WyCashTests.Domain
             Assert.AreEqual(60000, currencyReport.FinancialTitles.ElementAt(1).TotalValue);
 
             Assert.AreEqual(65000, currencyReport.TotalAtDollar);
-        }
-    }
-
-    [TestClass]
-    public class CurrencyTests 
-    {
-        [TestMethod]
-        public void Should_Be_Possible_Represent_A_Currency_With_A_Constant_For_Dollar_Conversion()
-        {
-            var currency = new Currency 
-            {
-                Name = "Dollar",
-                Acronym = "USD",
-                ConversionConstantToDollar = 1
-            };
-
-            Assert.AreEqual("Dollar", currency.Name);
-            Assert.AreEqual("USD", currency.Acronym);
-            Assert.AreEqual(1, currency.ConversionConstantToDollar);
         }
     }
 }

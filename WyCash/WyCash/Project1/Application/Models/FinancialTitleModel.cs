@@ -9,7 +9,7 @@ namespace WyCash.Apllication.Model
             Name = financialTitle.Name;
             Quantity = financialTitle.Quantity;
             Valuation = financialTitle.Valuation;
-            Currency = financialTitle.Currency;
+            Currency = financialTitle.Money;
             TotalValue = financialTitle.TotalValue;
             TotalValueInDollar = financialTitle.TotalValueInDollar;
         }
@@ -17,7 +17,7 @@ namespace WyCash.Apllication.Model
         public string Name { get; }
         public int Quantity { get; }
         public decimal Valuation { get; }
-        public Currency Currency { get; }
+        public Money Currency { get; }
         public decimal TotalValue { get; }
         public decimal TotalValueInDollar { get; }
     }
