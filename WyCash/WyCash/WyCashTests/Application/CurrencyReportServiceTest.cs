@@ -37,8 +37,7 @@ namespace WyCashTests.Domain
                 {
                     Name = "IBM",
                     Quantity = 1000,
-                    Valuation = 25,
-                    Money = Money.Dollar
+                    Money = Money.Dollar(25)
                 }
             };
 
@@ -55,9 +54,8 @@ namespace WyCashTests.Domain
             Assert.AreEqual(1, currencyReport.FinancialTitles.Count());
             Assert.AreEqual("IBM", currencyReport.FinancialTitles.ElementAt(0).Name);
             Assert.AreEqual(1000, currencyReport.FinancialTitles.ElementAt(0).Quantity);
-            Assert.AreEqual(25, currencyReport.FinancialTitles.ElementAt(0).Valuation);
-            Assert.AreEqual(25000, currencyReport.FinancialTitles.ElementAt(0).TotalValue);
-            Assert.AreEqual(25000, currencyReport.TotalAtDollar);
+            Assert.AreEqual(Money.Dollar(25000), currencyReport.FinancialTitles.ElementAt(0).TotalValue);
+            Assert.AreEqual(Money.Dollar(25000), currencyReport.TotalAtDollar);
         }
 
         [TestMethod]
@@ -73,15 +71,13 @@ namespace WyCashTests.Domain
                 {
                     Name = "IBM",
                     Quantity = 1000,
-                    Valuation = 25,
-                    Money = Money.Dollar
+                    Money = Money.Dollar(25)
                 },
                 new FinancialTitle
                 {
                     Name = "Novartis",
                     Quantity = 400,
-                    Valuation = 150,
-                    Money = Money.SwissFranc
+                    Money = Money.SwissFranc(150)
                 }
             };
 
@@ -99,15 +95,13 @@ namespace WyCashTests.Domain
 
             Assert.AreEqual("IBM", currencyReport.FinancialTitles.ElementAt(0).Name);
             Assert.AreEqual(1000, currencyReport.FinancialTitles.ElementAt(0).Quantity);
-            Assert.AreEqual(25, currencyReport.FinancialTitles.ElementAt(0).Valuation);
-            Assert.AreEqual(25000, currencyReport.FinancialTitles.ElementAt(0).TotalValue);
+            Assert.AreEqual(Money.Dollar(25000), currencyReport.FinancialTitles.ElementAt(0).TotalValue);
 
             Assert.AreEqual("Novartis", currencyReport.FinancialTitles.ElementAt(1).Name);
             Assert.AreEqual(400, currencyReport.FinancialTitles.ElementAt(1).Quantity);
-            Assert.AreEqual(150, currencyReport.FinancialTitles.ElementAt(1).Valuation);
-            Assert.AreEqual(60000, currencyReport.FinancialTitles.ElementAt(1).TotalValue);
+            Assert.AreEqual(Money.SwissFranc(60000), currencyReport.FinancialTitles.ElementAt(1).TotalValue);
 
-            Assert.AreEqual(65000, currencyReport.TotalAtDollar);
+            Assert.AreEqual(Money.Dollar(65000), currencyReport.TotalAtDollar);
         }
     }
 }

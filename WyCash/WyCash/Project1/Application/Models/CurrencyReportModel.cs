@@ -8,10 +8,19 @@ namespace WyCash.Apllication.Model
     {
         public CurrencyReportModel(IEnumerable<FinancialTitle> financialTitles)
         {
-            FinancialTitles = financialTitles.Select(f => new FinancialTitleModel(f));
+            var financialTitlesModel = new List<FinancialTitleModel>();
+            TotalAtDollar = Money.Dollar(0);
+
+            foreach (var financialTitle in financialTitles) 
+            {
+                financialTitlesModel.Add(new FinancialTitleModel(financialTitle));
+                TotalAtDollar = TotalAtDollar.SumUsingAsBaseDollar(financialTitlesModel.Last().TotalValue);
+            }
+
+            FinancialTitles = financialTitlesModel;
         }
 
         public IEnumerable<FinancialTitleModel> FinancialTitles { get; set; }
-        public decimal TotalAtDollar => FinancialTitles.Select(f => f.TotalValueInDollar).Sum();
+        public Money TotalAtDollar { get; private set; }
     }
 }

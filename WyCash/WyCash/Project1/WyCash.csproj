@@ -37,7 +37,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Application\Repositories\IFinancialTitleRepository.cs" />
-    <Compile Include="Domain\Currency.cs" />
+    <Compile Include="Domain\Money.cs" />
     <Compile Include="Domain\FinancialTitle.cs" />
     <Compile Include="Application\Models\CurrencyReportModel.cs" />
     <Compile Include="Application\Services\CurrencyReportService.cs" />
