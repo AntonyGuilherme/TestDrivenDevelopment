@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 
 namespace XUnit
 {
@@ -17,10 +18,10 @@ namespace XUnit
 
         public static void Main() 
         {
-            var test = new WasRun("testMethod");
-            Console.WriteLine(test.wasRun);
-            test.TestMethod();
-            Console.WriteLine(test.wasRun);
+            var test = new WasRun("TestMethod");
+            Console.WriteLine(test.TestMethodWasRun);
+            test.Run();
+            Console.WriteLine(test.TestMethodWasRun);
             Console.ReadLine();
         }
     }
@@ -33,11 +34,18 @@ namespace XUnit
         }
 
         public string TestMethodName { get; }
-        public bool wasRun { get; internal set; }
+        public bool TestMethodWasRun { get; internal set; }
 
-        internal void TestMethod()
+        internal void Run()
         {
-            wasRun= true;
+            Type wasRunType = typeof(WasRun);
+            MethodInfo testMethod = wasRunType.GetMethod(TestMethodName);
+            testMethod.Invoke(this, null);
+        }
+
+        public void TestMethod()
+        {
+            TestMethodWasRun= true;
         }
     }
 }
