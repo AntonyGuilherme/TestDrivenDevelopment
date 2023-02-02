@@ -19,33 +19,50 @@ namespace XUnit
         public static void Main() 
         {
             var test = new WasRun("TestMethod");
-            Console.WriteLine(test.TestMethodWasRun);
+            XAssert.IsThruty(!test.TestMethodWasRun);
             test.Run();
-            Console.WriteLine(test.TestMethodWasRun);
+            XAssert.IsThruty(test.TestMethodWasRun);
+            Console.WriteLine("Test Passed");
             Console.ReadLine();
         }
     }
 
-    class WasRun
+    class WasRun : TestCase<WasRun>
     {
-        public WasRun(string testMethodName)
-        {
-            TestMethodName = testMethodName;
-        }
+        public WasRun(string testMethodName) : base(testMethodName) { }
 
-        public string TestMethodName { get; }
         public bool TestMethodWasRun { get; internal set; }
 
-        internal void Run()
-        {
-            Type wasRunType = typeof(WasRun);
-            MethodInfo testMethod = wasRunType.GetMethod(TestMethodName);
-            testMethod.Invoke(this, null);
-        }
 
         public void TestMethod()
         {
             TestMethodWasRun= true;
+        }
+    }
+
+    abstract class TestCase<ClassThatImplementsTestCase>
+    {
+        public TestCase(string testMethodName)
+        {
+            TestMethodName = testMethodName;
+        }
+
+        public void Run()
+        {
+            Type wasRunType = typeof(ClassThatImplementsTestCase);
+            MethodInfo testMethod = wasRunType.GetMethod(TestMethodName);
+            testMethod.Invoke(this, null);
+        }
+
+        protected string TestMethodName { get; }
+    }
+
+    public static class XAssert 
+    {
+        public static void IsThruty(object value) 
+        { 
+            if(value is false) 
+                throw new ArgumentException(String.Format("Expected thruty but recieve {0}", value));
         }
     }
 }
