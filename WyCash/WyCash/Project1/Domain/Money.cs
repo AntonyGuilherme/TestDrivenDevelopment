@@ -14,6 +14,7 @@ namespace WyCash.Domain
         public string Currency { get; }
         public decimal Amount { get; }
         public decimal TaxConstantConversionToDollar { get; }
+        private decimal AmountAtDollar => Amount / TaxConstantConversionToDollar;
 
         public static Money Dollar(decimal amount) => new Money("USD", amount, 1);
 
@@ -24,13 +25,7 @@ namespace WyCash.Domain
             return new Money(Currency, Amount * valuation, TaxConstantConversionToDollar);
         }
 
-        public Money SumUsingAsBaseDollar(Money money) 
-        {
-            decimal amountOfMoneyAtDollar = Amount / TaxConstantConversionToDollar;
-            decimal otherAmountOfMoneyAtDollar = money.Amount / money.TaxConstantConversionToDollar;
-
-            return Dollar(amountOfMoneyAtDollar + otherAmountOfMoneyAtDollar);
-        }
+        public Money SumUsingAsBaseDollar(Money money) => Dollar(AmountAtDollar + money.AmountAtDollar);
 
         public override bool Equals(object obj)
         {
