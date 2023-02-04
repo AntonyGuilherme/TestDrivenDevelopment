@@ -16,29 +16,41 @@ namespace XUnit
 
         public static void Main() 
         {
-            new TestCaseTest().Run();
-
-            var testSetUp = new WasRun("TestMethod");
-            testSetUp.Run();
-            XAssert.IsThruty(testSetUp.SetUpWasRan);
-            Console.WriteLine("Test - Run SetUp Passed");
+            new ShouldExexcuteTheSetUp().Run();
+            new ShouldRunATest().Run();
+            
             Console.ReadLine();
         }
     }
 
-    class TestCaseTest: TestCase<TestCaseTest> 
+    class ShouldRunATest : TestCase<ShouldRunATest>
     {
-        public TestCaseTest() : base(nameof(Should_Execute_A_Test))
+        public ShouldRunATest() : base(nameof(Should_Run_A_Test))
+        {
+        }
+
+        public void Should_Run_A_Test() 
+        {
+            var testSetUp = new WasRun("TestMethod");
+            XAssert.AreEqual(null, testSetUp.Log);
+            testSetUp.Run();
+            XAssert.AreEqual("SetUp TestMethod", testSetUp.Log);
+        }
+    }
+
+
+    class ShouldExexcuteTheSetUp: TestCase<ShouldExexcuteTheSetUp> 
+    {
+        public ShouldExexcuteTheSetUp() : base(nameof(Should_Execute_A_Test))
         {
         }
 
         public void Should_Execute_A_Test() 
         {
             var testRunTest = new WasRun("TestMethod");
-            XAssert.IsThruty(!testRunTest.TestMethodWasRun);
+            XAssert.AreEqual(null, testRunTest.Log);
             testRunTest.Run();
-            XAssert.IsThruty(testRunTest.TestMethodWasRun);
-            Console.WriteLine("Test - Run Test Passed");
+            XAssert.AreEqual("SetUp TestMethod", testRunTest.Log);
         }
     }
 
@@ -46,17 +58,16 @@ namespace XUnit
     {
         public WasRun(string testMethodName) : base(testMethodName) { }
 
-        public bool TestMethodWasRun { get; internal set; }
-        public bool SetUpWasRan { get; internal set; }
+        public string Log { get; internal set; }
 
         public override void SetUp() 
         {
-            SetUpWasRan = true;
+            Log = "SetUp";
         }
 
         public void TestMethod()
         {
-            TestMethodWasRun= true;
+            Log = string.Format("{0} {1}", Log, nameof(TestMethod));
         }
     }
 
@@ -76,6 +87,8 @@ namespace XUnit
             Type wasRunType = typeof(ClassThatImplementsTestCase);
             MethodInfo testMethod = wasRunType.GetMethod(TestMethodName);
             testMethod.Invoke(this, null);
+
+            Console.WriteLine("{0} - passed", TestMethodName);
         }
 
         protected string TestMethodName { get; }
@@ -83,10 +96,19 @@ namespace XUnit
 
     public static class XAssert 
     {
-        public static void IsThruty(object value) 
+        public static void IsThruty(bool value) 
         {
-            if (value is false) 
+            if (!value) 
                 throw new ArgumentException(String.Format("Expected thruty but recieve {0}", value));
+        }
+
+        public static void AreEqual(object expectedValue, object recivedValue) 
+        {
+            bool bothValueAreNull = expectedValue == null && recivedValue == null;
+            bool expectValueIsNullButRecivedValueIsNotNull = expectedValue == null && recivedValue != null;
+
+            if (expectValueIsNullButRecivedValueIsNotNull || !bothValueAreNull && !expectedValue.Equals(recivedValue))
+                throw new ArgumentException(String.Format("Expected {0} but recieve {1}", expectedValue, recivedValue));
         }
     }
 }
