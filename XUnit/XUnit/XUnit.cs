@@ -18,8 +18,23 @@ namespace XUnit
         {
             new ShouldExexcuteTheSetUp().Run();
             new ShouldRunATest().Run();
+            new ShouldExecuteTheTearDown().Run();
             
             Console.ReadLine();
+        }
+    }
+
+
+    class ShouldExecuteTheTearDown: TestCase<ShouldExecuteTheTearDown> 
+    {
+        public ShouldExecuteTheTearDown(): base(nameof(Should_Execute_The_Tear_Down)) { }
+
+        public void Should_Execute_The_Tear_Down() 
+        {
+            var testSetUp = new WasRun("TestMethod");
+            XAssert.AreEqual(null, testSetUp.Log);
+            testSetUp.Run();
+            XAssert.AreEqual("SetUp TestMethod TearDown", testSetUp.Log);
         }
     }
 
@@ -37,7 +52,6 @@ namespace XUnit
             XAssert.AreEqual("SetUp TestMethod", testSetUp.Log);
         }
     }
-
 
     class ShouldExexcuteTheSetUp: TestCase<ShouldExexcuteTheSetUp> 
     {
@@ -60,14 +74,19 @@ namespace XUnit
 
         public string Log { get; internal set; }
 
-        public override void SetUp() 
+        protected override void SetUp() 
         {
-            Log = "SetUp";
+            Log = nameof(SetUp);
         }
 
         public void TestMethod()
         {
             Log = string.Format("{0} {1}", Log, nameof(TestMethod));
+        }
+
+        protected override void TearDown()
+        {
+            Log = string.Format("{0} {1}", Log, nameof(TearDown));
         }
     }
 
@@ -78,7 +97,7 @@ namespace XUnit
             TestMethodName = testMethodName;
         }
 
-        public virtual void SetUp() { }
+        protected virtual void SetUp() { }
 
         public void Run()
         {
@@ -88,8 +107,12 @@ namespace XUnit
             MethodInfo testMethod = wasRunType.GetMethod(TestMethodName);
             testMethod.Invoke(this, null);
 
+            TearDown();
+
             Console.WriteLine("{0} - passed", TestMethodName);
         }
+
+        protected virtual void TearDown() { }
 
         protected string TestMethodName { get; }
     }
