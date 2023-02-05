@@ -16,55 +16,63 @@ namespace XUnit
 
         public static void Main() 
         {
-            new ShouldExexcuteTheSetUp().Run();
-            new ShouldRunATest().Run();
-            new ShouldExecuteTheTearDown().Run();
+            TestCaseTest.Should_Run_A_Test();
+            TestCaseTest.Should_Execute_The_Test_SetUp();
+            TestCaseTest.Should_Execute_The_Tear_Down();
+            TestCaseTest.Should_Execute_The_Tear_Down_Even_If_Test_Fails();
+            TestCaseTest.Should_Return_The_Tests_Result();
+            TestCaseTest.Should_Return_The_Tests_Result_With_Failure_Tests();
             
-            Console.ReadLine();
+
+            Console.ReadKey();
         }
     }
 
 
-    class ShouldExecuteTheTearDown: TestCase<ShouldExecuteTheTearDown> 
+    class TestCaseTest
     {
-        public ShouldExecuteTheTearDown(): base(nameof(Should_Execute_The_Tear_Down)) { }
-
-        public void Should_Execute_The_Tear_Down() 
+        public static void Should_Run_A_Test()
         {
             var testSetUp = new WasRun("TestMethod");
             XAssert.AreEqual(null, testSetUp.Log);
             testSetUp.Run();
             XAssert.AreEqual("SetUp TestMethod TearDown", testSetUp.Log);
         }
-    }
 
-    class ShouldRunATest : TestCase<ShouldRunATest>
-    {
-        public ShouldRunATest() : base(nameof(Should_Run_A_Test))
-        {
-        }
-
-        public void Should_Run_A_Test() 
-        {
-            var testSetUp = new WasRun("TestMethod");
-            XAssert.AreEqual(null, testSetUp.Log);
-            testSetUp.Run();
-            XAssert.AreEqual("SetUp TestMethod", testSetUp.Log);
-        }
-    }
-
-    class ShouldExexcuteTheSetUp: TestCase<ShouldExexcuteTheSetUp> 
-    {
-        public ShouldExexcuteTheSetUp() : base(nameof(Should_Execute_A_Test))
-        {
-        }
-
-        public void Should_Execute_A_Test() 
+        public static void Should_Execute_The_Test_SetUp()
         {
             var testRunTest = new WasRun("TestMethod");
             XAssert.AreEqual(null, testRunTest.Log);
             testRunTest.Run();
-            XAssert.AreEqual("SetUp TestMethod", testRunTest.Log);
+            XAssert.AreEqual("SetUp TestMethod TearDown", testRunTest.Log);
+        }
+
+        public static void Should_Execute_The_Tear_Down() 
+        {
+            var testTearDown = new WasRun("TestMethod");
+            XAssert.AreEqual(null, testTearDown.Log);
+            testTearDown.Run();
+            XAssert.AreEqual("SetUp TestMethod TearDown", testTearDown.Log);
+        }
+
+        public static void Should_Execute_The_Tear_Down_Even_If_Test_Fails()
+        {
+            var testTearDown = new WasRun("TestMethodBroken");
+            XAssert.AreEqual(null, testTearDown.Log);
+            testTearDown.Run();
+            XAssert.AreEqual("SetUp TestMethodBroken TearDown", testTearDown.Log);
+        }
+
+        public static void Should_Return_The_Tests_Result()
+        {
+            var testTheTestResult = new WasRun("TestMethod");
+            XAssert.AreEqual("1 Run, 0 Failed", testTheTestResult.Run().Summary);
+        }
+
+        public static void Should_Return_The_Tests_Result_With_Failure_Tests()
+        {
+            var testTheTestResult = new WasRun("TestMethodBroken");
+            XAssert.AreEqual("1 Run, 1 Failed", testTheTestResult.Run().Summary);
         }
     }
 
@@ -84,6 +92,13 @@ namespace XUnit
             Log = string.Format("{0} {1}", Log, nameof(TestMethod));
         }
 
+        public void TestMethodBroken()
+        {
+            Log = string.Format("{0} {1}", Log, nameof(TestMethodBroken));
+
+            throw new NotSupportedException();
+        }
+
         protected override void TearDown()
         {
             Log = string.Format("{0} {1}", Log, nameof(TearDown));
@@ -99,17 +114,33 @@ namespace XUnit
 
         protected virtual void SetUp() { }
 
-        public void Run()
+        public TestResult Run()
         {
+            var result = new TestResult();
+            
             SetUp();
 
             Type wasRunType = typeof(ClassThatImplementsTestCase);
             MethodInfo testMethod = wasRunType.GetMethod(TestMethodName);
-            testMethod.Invoke(this, null);
 
+            try
+            {
+                testMethod.Invoke(this, null);
+                Console.WriteLine("{0} - passed", TestMethodName);
+            }
+            catch (Exception)
+            {
+                result.TestFailed();
+                Console.WriteLine("{0} - failed", TestMethodName);
+            }
+            finally 
+            { 
+                result.TestRan(); 
+            }
+            
             TearDown();
-
-            Console.WriteLine("{0} - passed", TestMethodName);
+            
+            return result;
         }
 
         protected virtual void TearDown() { }
@@ -117,12 +148,29 @@ namespace XUnit
         protected string TestMethodName { get; }
     }
 
+    public class TestResult
+    {
+        private int NumberOftestsThatWasRan { get; set; }
+        private int NumberOfTestsThatFailed { get; set; }
+        public string Summary => $"{NumberOftestsThatWasRan} Run, {NumberOfTestsThatFailed} Failed";
+
+        public void TestRan() 
+        {
+            NumberOftestsThatWasRan++;
+        }
+
+        public void TestFailed()
+        {
+            NumberOfTestsThatFailed++;
+        }
+    }
+
     public static class XAssert 
     {
         public static void IsThruty(bool value) 
         {
             if (!value) 
-                throw new ArgumentException(String.Format("Expected thruty but recieve {0}", value));
+                throw new ArgumentException(string.Format("Expected thruty but recieve {0}", value));
         }
 
         public static void AreEqual(object expectedValue, object recivedValue) 
