@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace XUnit
@@ -16,22 +17,28 @@ namespace XUnit
 
         public static void Main() 
         {
-            TestCaseTest.Should_Run_A_Test();
-            TestCaseTest.Should_Execute_The_Test_SetUp();
-            TestCaseTest.Should_Execute_The_Tear_Down();
-            TestCaseTest.Should_Execute_The_Tear_Down_Even_If_Test_Fails();
-            TestCaseTest.Should_Return_The_Tests_Result();
-            TestCaseTest.Should_Return_The_Tests_Result_With_Failure_Tests();
-            
+            var suite = new TestSuite();
 
-            Console.ReadKey();
+            suite.Add(new TestCaseTest("Should_Run_A_Test"));
+            suite.Add(new TestCaseTest("Should_Execute_The_Test_SetUp"));
+            suite.Add(new TestCaseTest("Should_Execute_The_Tear_Down"));
+            suite.Add(new TestCaseTest("Should_Execute_The_Tear_Down_Even_If_Test_Fails"));
+            suite.Add(new TestCaseTest("Should_Return_The_Tests_Result"));
+            suite.Add(new TestCaseTest("Should_Return_The_Tests_Result_With_Failure_Tests"));
+            suite.Add(new TestCaseTest("Should_Execute_MultipleTests"));
+
+            Console.WriteLine(suite.Run().Summary);
+
+            Console.ReadLine();
         }
     }
 
 
-    class TestCaseTest
+    class TestCaseTest: TestCase
     {
-        public static void Should_Run_A_Test()
+        public TestCaseTest(string testMethodName) : base(testMethodName) { }
+
+        public void Should_Run_A_Test()
         {
             var testSetUp = new WasRun("TestMethod");
             XAssert.AreEqual(null, testSetUp.Log);
@@ -39,7 +46,7 @@ namespace XUnit
             XAssert.AreEqual("SetUp TestMethod TearDown", testSetUp.Log);
         }
 
-        public static void Should_Execute_The_Test_SetUp()
+        public void Should_Execute_The_Test_SetUp()
         {
             var testRunTest = new WasRun("TestMethod");
             XAssert.AreEqual(null, testRunTest.Log);
@@ -47,7 +54,7 @@ namespace XUnit
             XAssert.AreEqual("SetUp TestMethod TearDown", testRunTest.Log);
         }
 
-        public static void Should_Execute_The_Tear_Down() 
+        public void Should_Execute_The_Tear_Down() 
         {
             var testTearDown = new WasRun("TestMethod");
             XAssert.AreEqual(null, testTearDown.Log);
@@ -55,7 +62,7 @@ namespace XUnit
             XAssert.AreEqual("SetUp TestMethod TearDown", testTearDown.Log);
         }
 
-        public static void Should_Execute_The_Tear_Down_Even_If_Test_Fails()
+        public void Should_Execute_The_Tear_Down_Even_If_Test_Fails()
         {
             var testTearDown = new WasRun("TestMethodBroken");
             XAssert.AreEqual(null, testTearDown.Log);
@@ -63,22 +70,53 @@ namespace XUnit
             XAssert.AreEqual("SetUp TestMethodBroken TearDown", testTearDown.Log);
         }
 
-        public static void Should_Return_The_Tests_Result()
+        public void Should_Return_The_Tests_Result()
         {
             var testTheTestResult = new WasRun("TestMethod");
             XAssert.AreEqual("1 Run, 0 Failed", testTheTestResult.Run().Summary);
         }
 
-        public static void Should_Return_The_Tests_Result_With_Failure_Tests()
+        public void Should_Return_The_Tests_Result_With_Failure_Tests()
         {
             var testTheTestResult = new WasRun("TestMethodBroken");
             XAssert.AreEqual("1 Run, 1 Failed", testTheTestResult.Run().Summary);
         }
+
+        public void Should_Execute_MultipleTests() 
+        {
+            var suite = new TestSuite();
+            suite.Add(new WasRun("TestMethod"));
+            suite.Add(new WasRun("TestMethodBroken"));
+            var result = suite.Run();
+            XAssert.AreEqual("2 Run, 1 Failed", result.Summary);
+        }
     }
 
-    class WasRun : TestCase<WasRun>
+    class TestSuite
+    {
+        private readonly List<TestCase> _tests = new List<TestCase>();
+
+        public void Add(TestCase wasRun)
+        {
+            _tests.Add(wasRun);
+        }
+
+        public TestResult Run()
+        {
+            var testResult = new TestResult();
+
+            foreach (var test in _tests)
+                test.Run(testResult);
+
+            return testResult;
+        }
+    }
+
+    class WasRun : TestCase
     {
         public WasRun(string testMethodName) : base(testMethodName) { }
+
+        public override bool ShutUp => true;
 
         public string Log { get; internal set; }
 
@@ -105,33 +143,34 @@ namespace XUnit
         }
     }
 
-    abstract class TestCase<ClassThatImplementsTestCase>
+    abstract class TestCase
     {
         public TestCase(string testMethodName)
         {
             TestMethodName = testMethodName;
         }
 
+        public virtual bool ShutUp { get; protected set; } = false; 
+
         protected virtual void SetUp() { }
 
-        public TestResult Run()
-        {
-            var result = new TestResult();
-            
+        public TestResult Run(TestResult result)
+        {            
             SetUp();
-
-            Type wasRunType = typeof(ClassThatImplementsTestCase);
+            Type wasRunType = GetType();
             MethodInfo testMethod = wasRunType.GetMethod(TestMethodName);
 
             try
             {
                 testMethod.Invoke(this, null);
-                Console.WriteLine("{0} - passed", TestMethodName);
+                if(!ShutUp)
+                    Console.WriteLine("{0} - passed", TestMethodName);
             }
             catch (Exception)
             {
                 result.TestFailed();
-                Console.WriteLine("{0} - failed", TestMethodName);
+                if (!ShutUp)
+                    Console.WriteLine("{0} - failed", TestMethodName);
             }
             finally 
             { 
@@ -141,6 +180,11 @@ namespace XUnit
             TearDown();
             
             return result;
+        }
+
+        public TestResult Run()
+        {
+            return Run(new TestResult());
         }
 
         protected virtual void TearDown() { }
