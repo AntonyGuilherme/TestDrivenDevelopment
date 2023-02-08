@@ -17,17 +17,16 @@ namespace XUnit
 
         public static void Main() 
         {
-            var suite = new TestSuite();
+            //suite.Add(new TestCaseTest("Should_Run_A_Test"));
+            //suite.Add(new TestCaseTest("Should_Execute_The_Test_SetUp"));
+            //suite.Add(new TestCaseTest("Should_Execute_The_Tear_Down"));
+            //suite.Add(new TestCaseTest("Should_Execute_The_Tear_Down_Even_If_Test_Fails"));
+            //suite.Add(new TestCaseTest("Should_Return_The_Tests_Result"));
+            //suite.Add(new TestCaseTest("Should_Return_The_Tests_Result_With_Failure_Tests"));
+            //suite.Add(new TestCaseTest("Should_Execute_MultipleTests"));
+            
 
-            suite.Add(new TestCaseTest("Should_Run_A_Test"));
-            suite.Add(new TestCaseTest("Should_Execute_The_Test_SetUp"));
-            suite.Add(new TestCaseTest("Should_Execute_The_Tear_Down"));
-            suite.Add(new TestCaseTest("Should_Execute_The_Tear_Down_Even_If_Test_Fails"));
-            suite.Add(new TestCaseTest("Should_Return_The_Tests_Result"));
-            suite.Add(new TestCaseTest("Should_Return_The_Tests_Result_With_Failure_Tests"));
-            suite.Add(new TestCaseTest("Should_Execute_MultipleTests"));
-
-            Console.WriteLine(suite.Run().Summary);
+            Console.WriteLine(new TestCaseTest().RunAll().Summary);
 
             Console.ReadLine();
         }
@@ -36,100 +35,110 @@ namespace XUnit
 
     class TestCaseTest: TestCase
     {
-        public TestCaseTest(string testMethodName) : base(testMethodName) { }
-
+        [XTest]
         public void Should_Run_A_Test()
         {
-            var testSetUp = new WasRun("TestMethod");
+            var testSetUp = new WasRun();
             XAssert.AreEqual(null, testSetUp.Log);
-            testSetUp.Run();
+            testSetUp.RunOnly("TestMethod", new TestResult());
             XAssert.AreEqual("SetUp TestMethod TearDown", testSetUp.Log);
         }
 
+        [XTest]
         public void Should_Execute_The_Test_SetUp()
         {
-            var testRunTest = new WasRun("TestMethod");
+            var testRunTest = new WasRun();
             XAssert.AreEqual(null, testRunTest.Log);
-            testRunTest.Run();
+            testRunTest.RunOnly("TestMethod", new TestResult());
             XAssert.AreEqual("SetUp TestMethod TearDown", testRunTest.Log);
         }
 
+        [XTest]
         public void Should_Execute_The_Tear_Down() 
         {
-            var testTearDown = new WasRun("TestMethod");
+            var testTearDown = new WasRun();
             XAssert.AreEqual(null, testTearDown.Log);
-            testTearDown.Run();
+            testTearDown.RunOnly("TestMethod", new TestResult());
             XAssert.AreEqual("SetUp TestMethod TearDown", testTearDown.Log);
         }
 
+        [XTest]
         public void Should_Execute_The_Tear_Down_Even_If_Test_Fails()
         {
-            var testTearDown = new WasRun("TestMethodBroken");
+            var testTearDown = new WasRun();
             XAssert.AreEqual(null, testTearDown.Log);
-            testTearDown.Run();
+            testTearDown.RunAll();
             XAssert.AreEqual("SetUp TestMethodBroken TearDown", testTearDown.Log);
         }
 
+        [XTest]
         public void Should_Return_The_Tests_Result()
         {
-            var testTheTestResult = new WasRun("TestMethod");
-            XAssert.AreEqual("1 Run, 0 Failed", testTheTestResult.Run().Summary);
+            var testTheTestResult = new WasRun();
+            XAssert.AreEqual("1 Run, 0 Failed", testTheTestResult.RunOnly("TestMethod", new TestResult()).Summary);
         }
 
+        [XTest]
         public void Should_Return_The_Tests_Result_With_Failure_Tests()
         {
-            var testTheTestResult = new WasRun("TestMethodBroken");
-            XAssert.AreEqual("1 Run, 1 Failed", testTheTestResult.Run().Summary);
+            var testTheTestResult = new WasRun();
+            XAssert.AreEqual("1 Run, 1 Failed", testTheTestResult.RunOnly("TestMethodBroken", new TestResult()).Summary);
         }
 
-        public void Should_Execute_MultipleTests() 
+        [XTest]
+        public void Should_Not_Execute_Any_Test_Without_Attribute_XTest()
         {
-            var suite = new TestSuite();
-            suite.Add(new WasRun("TestMethod"));
-            suite.Add(new WasRun("TestMethodBroken"));
-            var result = suite.Run();
-            XAssert.AreEqual("2 Run, 1 Failed", result.Summary);
+            TestWihtAttributeXTest test = new TestWihtAttributeXTest();
+            TestResult result = test.RunAll();
+
+            XAssert.AreEqual("1 Run, 0 Failed", result.Summary);
+        }
+
+        [XTest]
+        public void Should_Execute_All_Test_With_Attribute_XTest()
+        {
+            TestWihtAttributeXTest test = new TestWihtAttributeXTest();
+            TestResult result = test.RunAll();
+
+            XAssert.AreEqual("1 Run, 0 Failed", result.Summary);
         }
     }
 
-    class TestSuite
+    class TestWihtAttributeXTest : TestCase
     {
-        private readonly List<TestCase> _tests = new List<TestCase>();
 
-        public void Add(TestCase wasRun)
+        public override bool ShutUp => true;
+
+        public void TestWihoutXTestAttrbiute()
         {
-            _tests.Add(wasRun);
+
         }
 
-        public TestResult Run()
+        [XTest]
+        public void TestWihtXTestAttrbiute()
         {
-            var testResult = new TestResult();
 
-            foreach (var test in _tests)
-                test.Run(testResult);
-
-            return testResult;
         }
     }
 
     class WasRun : TestCase
     {
-        public WasRun(string testMethodName) : base(testMethodName) { }
-
         public override bool ShutUp => true;
 
         public string Log { get; internal set; }
 
-        protected override void SetUp() 
+        protected override void SetUp()
         {
             Log = nameof(SetUp);
         }
 
+        [XTest]
         public void TestMethod()
         {
             Log = string.Format("{0} {1}", Log, nameof(TestMethod));
         }
 
+        [XTest]
         public void TestMethodBroken()
         {
             Log = string.Format("{0} {1}", Log, nameof(TestMethodBroken));
@@ -145,51 +154,55 @@ namespace XUnit
 
     abstract class TestCase
     {
-        public TestCase(string testMethodName)
-        {
-            TestMethodName = testMethodName;
-        }
-
         public virtual bool ShutUp { get; protected set; } = false; 
 
         protected virtual void SetUp() { }
 
-        public TestResult Run(TestResult result)
-        {            
+        public TestResult RunOnly(string methodName, TestResult result)
+        {
             SetUp();
             Type wasRunType = GetType();
-            MethodInfo testMethod = wasRunType.GetMethod(TestMethodName);
+            MethodInfo testMethod = wasRunType.GetMethod(methodName);
 
             try
             {
                 testMethod.Invoke(this, null);
-                if(!ShutUp)
-                    Console.WriteLine("{0} - passed", TestMethodName);
+                if (!ShutUp)
+                    Console.WriteLine("{0} - passed", methodName);
             }
             catch (Exception)
             {
                 result.TestFailed();
                 if (!ShutUp)
-                    Console.WriteLine("{0} - failed", TestMethodName);
+                    Console.WriteLine("{0} - failed", methodName);
             }
-            finally 
-            { 
-                result.TestRan(); 
+            finally
+            {
+                result.TestRan();
             }
-            
+
             TearDown();
-            
+
             return result;
         }
 
-        public TestResult Run()
+        public TestResult RunAll()
         {
-            return Run(new TestResult());
+            TestResult result = new TestResult();
+            Type classType = GetType();
+
+            foreach (MethodInfo method in classType.GetMethods())
+            {
+                if (method.GetCustomAttribute(typeof(XTest)) != null)
+                {
+                    RunOnly(method.Name, result);
+                }
+            }
+
+            return result;
         }
 
         protected virtual void TearDown() { }
-
-        protected string TestMethodName { get; }
     }
 
     public class TestResult
