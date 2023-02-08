@@ -39,36 +39,45 @@ namespace XUnit
         public void Should_Run_A_Test()
         {
             var testSetUp = new WasRun();
-            XAssert.AreEqual(null, testSetUp.Log);
+            XAssert.AreEqual("Log", testSetUp.Log);
             testSetUp.RunOnly("TestMethod", new TestResult());
-            XAssert.AreEqual("SetUp TestMethod TearDown", testSetUp.Log);
+            XAssert.AreEqual("Log-SetUp-TestMethod-TearDown", testSetUp.Log);
+        }
+
+        [XTest]
+        public void Should_Execute_The_AllTests_Even_If_Test_Fails()
+        {
+            var test = new WasRun();
+            XAssert.AreEqual("Log", test.Log);
+            test.RunAll();
+            XAssert.AreEqual("Log-SetUp-TestMethod-TearDown-SetUp-TestMethodBroken-TearDown", test.Log);
         }
 
         [XTest]
         public void Should_Execute_The_Test_SetUp()
         {
             var testRunTest = new WasRun();
-            XAssert.AreEqual(null, testRunTest.Log);
+            XAssert.AreEqual("Log", testRunTest.Log);
             testRunTest.RunOnly("TestMethod", new TestResult());
-            XAssert.AreEqual("SetUp TestMethod TearDown", testRunTest.Log);
+            XAssert.AreEqual("Log-SetUp-TestMethod-TearDown", testRunTest.Log);
         }
 
         [XTest]
         public void Should_Execute_The_Tear_Down() 
         {
             var testTearDown = new WasRun();
-            XAssert.AreEqual(null, testTearDown.Log);
+            XAssert.AreEqual("Log", testTearDown.Log);
             testTearDown.RunOnly("TestMethod", new TestResult());
-            XAssert.AreEqual("SetUp TestMethod TearDown", testTearDown.Log);
+            XAssert.AreEqual("Log-SetUp-TestMethod-TearDown", testTearDown.Log);
         }
 
         [XTest]
         public void Should_Execute_The_Tear_Down_Even_If_Test_Fails()
         {
             var testTearDown = new WasRun();
-            XAssert.AreEqual(null, testTearDown.Log);
-            testTearDown.RunAll();
-            XAssert.AreEqual("SetUp TestMethodBroken TearDown", testTearDown.Log);
+            XAssert.AreEqual("Log", testTearDown.Log);
+            testTearDown.RunOnly("TestMethodBroken", new TestResult());
+            XAssert.AreEqual("Log-SetUp-TestMethodBroken-TearDown", testTearDown.Log);
         }
 
         [XTest]
@@ -125,30 +134,30 @@ namespace XUnit
     {
         public override bool ShutUp => true;
 
-        public string Log { get; internal set; }
+        public string Log { get; internal set; } = "Log";
 
         protected override void SetUp()
         {
-            Log = nameof(SetUp);
+            Log = string.Format("{0}-{1}", Log, nameof(SetUp));
         }
 
         [XTest]
         public void TestMethod()
         {
-            Log = string.Format("{0} {1}", Log, nameof(TestMethod));
+            Log = string.Format("{0}-{1}", Log, nameof(TestMethod));
         }
 
         [XTest]
         public void TestMethodBroken()
         {
-            Log = string.Format("{0} {1}", Log, nameof(TestMethodBroken));
+            Log = string.Format("{0}-{1}", Log, nameof(TestMethodBroken));
 
             throw new NotSupportedException();
         }
 
         protected override void TearDown()
         {
-            Log = string.Format("{0} {1}", Log, nameof(TearDown));
+            Log = string.Format("{0}-{1}", Log, nameof(TearDown));
         }
     }
 
